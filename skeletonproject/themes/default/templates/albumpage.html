@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block mainbody %}
+
+<div class="header">
+<h1>{{gallerytitle}}</h1>
+</div>
+
+{% for image in images %}
+<div class="photocontainer">
+	<img src="small_{{image.filename}}" />
+	<div class="caption">
+		{{image.title}}<br />
+		<a href="">View Image / Comment</a>
+	</div>
+</div>
+
+{% endfor %}
+
+
+<div class="navigation">
+{% if prevlink %}
+<a href="{{prevlink}}">&lang;</a>
+{% endif %}
+
+{% for link in pagelinks %}
+<a href="{{link.link}}">{{link.title}}</a>
+{% endfor %}
+
+{% if nextlink %}
+<a href="{{nextlink}}">&rang;</a>
+{% endif %}
+</div>
+
+{% endblock %}

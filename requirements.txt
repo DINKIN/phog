@@ -1,0 +1,5 @@
+jinja2
+boto
+argparse
+PIL
+iptcinfo
