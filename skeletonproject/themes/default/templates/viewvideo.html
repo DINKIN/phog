@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block mainbody %}
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "http://connect.facebook.net/en_GB/all.js#xfbml=1&appId=202185246482667";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+<script type="text/javascript" src="static/flowplayer-3.2.11.min.js"></script>
+
+<div class="header">
+<h1>{{video_name}}</h1>
+</div>
+
+<div class="largeimagepage">
+
+<a style="display:block;width:{{width}}px;height:{{height}}px; margin: auto;" id="player"></a> 
+
+<script>
+			flowplayer("player", "static/flowplayer-3.2.14.swf",{
+				clip: { autoPlay: true },
+				playlist: [
+				 '{{video_name}}',
+				],
+			});
+</script>
+
+<br /><br />
+<div class="fb-like" data-href="{{root_url}}view_video_{{id}}.html" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-colorscheme="dark" data-font="trebuchet ms"></div>
+<br /><br />
+<div class="fb-comments" data-href="/view_video_{{id}}.html" data-num-posts="3" data-width="470" data-colorscheme="dark"></div>
+</div>
+{% endblock %}

@@ -1,16 +1,46 @@
 import os
 import imageprocessing
+import videoprocessing
 import math
+import shutil
+import hashlib
 from jinja2 import Environment, FileSystemLoader
+from multiprocessing import Pool, Queue
+from plugins import PluginManager
 
-RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html']
+RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html','viewvideo.html']
+
+def processImage(config):
+	fileName,output_path,small_size,large_size,password_hash=config
+	print "processing %s"%fileName
+	imgpath,imgname=os.path.split(fileName)
+	returnmap={}
+	imgtitle = imageprocessing.getTitle(fileName,imgname)
+	returnmap['title']=imgtitle
+	returnmap['filename']=imgname
+			
+	img_output_path=os.path.join(output_path,"small_%s"%imgname)
+	returnmap['small']=img_output_path
+	real_img_output_path=os.path.join(output_path,"%ssmall_%s"%(password_hash,imgname))
+			
+	returnmap['smallsize']=imageprocessing.resizeAndSave(fileName,(int(small_size[0]),int(small_size[1])),real_img_output_path,thumbnail=True)
+
+	img_output_path=os.path.join(output_path,"large_%s"%imgname)
+	returnmap['large']=img_output_path
+	real_img_output_path=os.path.join(output_path,"%slarge_%s"%(password_hash,imgname))
+			
+	returnmap['largesize']=imageprocessing.resizeAndSave(fileName,(int(large_size[0]),int(large_size[1])),real_img_output_path)
+	return returnmap
+
 
 class Gallery:
 
 
 	def __init__(self,config,root_path):
 		self.config=config
+		self.root_path=root_path
 		self.source_image_path=os.path.join(root_path,"source_images")
+		self.source_video_path=os.path.join(root_path,"source_videos")
 		self.theme_name=config.get("gallery","theme")
 		self.themes_path = os.path.join(root_path,"themes")
 		self.theme_path=os.path.join(self.themes_path,self.theme_name)
@@ -23,14 +53,17 @@ class Gallery:
 		self.template_path=os.path.join(root_path,"templates")
 		self.output_path=os.path.join(root_path,"output")
 
-		self.small_size=self.config.get("gallery","small_size").split(",")
-		self.large_size=self.config.get("gallery","large_size").split(",")
+		self.small_size=self.config.get("gallery","small_image_size").split(",")
+		self.large_size=self.config.get("gallery","large_image_size").split(",")
+
+		self.video_size=self.config.get("gallery","video_max_size").split(",")
 
 		self.configureTemplates()
 		self.discoverPlugins()
 
 	def discoverPlugins(self):
-		pass
+		self.pluginManager=PluginManager()
+		self.pluginManager.discoverPlugins(os.path.join(self.root_path,"plugins"))
 
 	def configureTemplates(self):
 		self.tempEnv = Environment(loader=FileSystemLoader(self.templates_path))
@@ -40,55 +73,141 @@ class Gallery:
 
 	def generate(self):
 
-		images=self.discoverImages()
-		# plugin call point - pre thumbnail generation, post file discovery (to add additional files)
+		imageFilenames=self.discoverImages()
 
-		print "generating image sizes:"
-		#self.generateImages(images)
+		videos=self.discoverAndProcessVideos()
+
+		print videos
+
+		images=self.generateImages(imageFilenames)
 
 		# plugin call point - pre page generation, with images as arguments (to provide extra context for pages)
-		print "generating pages"
-		self.generatePages(images)
+		extra_context=self.pluginManager.prePageGeneration(self.config,self.source_image_path,self.source_video_path,images,videos)
+
+		self.generatePages(images,videos,extra_context)
 	
 		self.copyStaticContent()
 
-		# plugin call point, generation complete - passed images and pages (to tweak generated content)
+
+	def upload(self):
+		# plugin call point, generation complete - upload
+		self.pluginManager.upload(self.config,self.output_path)
+
+		# plugin call point, generation complete - notify
+		self.pluginManager.notify(self.config,self.output_path)
 
 	def copyStaticContent(self):
-		pass
+		static_path=os.path.join(self.theme_path,"static")
+		static_output_path=os.path.join(self.output_path,"static")
+		if os.path.exists(static_output_path):
+			shutil.rmtree(static_output_path)
+		shutil.copytree(static_path,static_output_path)
 
 	def discoverImages(self):
 		images=[]
 		for filename in os.listdir(self.source_image_path):
-			if filename.find(".jpg")!=-1:
-				images.append({'path':os.path.join(self.source_image_path,filename),'filename':filename})
+			if filename.lower().find(".jpg")!=-1:
+				images.append(os.path.join(self.source_image_path,filename))
 
 		print "%s images found"%len(images)
 		return images
 
-	def generatePages(self,images):
+	def discoverAndProcessVideos(self):
+		transcoded_videos=[]
+		raw_videos=[]
+		for filename in os.listdir(self.source_video_path):
+			extension=filename.lower()[-3:]
+			if extension in ['m4v','mp4']:
+				transcoded_videos.append(filename)
+			elif extension in ['avi','mov','mvi','wmv']:
+				raw_videos.append(filename)
+
+		print "found raw videos, to be transcoded: %s"%raw_videos
+		print "found already transcoded videos: %s"%transcoded_videos
+
+		vp = videoprocessing.VideoProcessor()
+
+		completed_video_paths=[]
+
+		# copy the already-transcoded videos to the output directory
+		for filename in transcoded_videos:
+			source_path=os.path.join(self.source_video_path,filename)
+			target_path=os.path.join(self.output_path,filename)
+
+			print "copying m4v video: %s"%source_path
+			shutil.copy(source_path,target_path)
+			completed_video_paths.append(target_path)
+
+		# transcode the others
+		for filename in raw_videos:
+			source_path=os.path.join(self.source_video_path,filename)
+			target_path=os.path.join(self.output_path,filename[:filename.find(".")]+".m4v")
+
+			print "transcoding %s to %s"%(source_path,target_path)
+			params=vp.getSizeAndDuration(source_path)
+			vp.trancodeRawVideo(source_path,target_path,params,self.video_size)
+			completed_video_paths.append(target_path)
+
+
+		completed_videos=[]
+		for video_path in completed_video_paths:
+			# generate thumbnail
+			thumb_name=vp.getScreencap(video_path)
+
+			# get dimensions and duration
+			params=vp.getSizeAndDuration(video_path)
+			params['filename']=thumb_name
+			params['type']='video'
+			params['video_name']=os.path.split(video_path)[1]
+			completed_videos.append(params)
+
+		return completed_videos
+
+
+
+	def generatePages(self, images, videos, extra_context):
 		indexIsAlbumPage = self.config.getboolean("gallery","INDEX_IS_ALBUM_PAGE")
 		imagesPerPage = int(self.config.get("gallery","IMAGES_PER_PAGE"))
 
-		pages=int(math.ceil((len(images)/float(imagesPerPage))))
+		
 
-		print "%s gallery pages"%pages
+		# generate image pages
+		for img in images:
+			currPageName="view_photo_%s.html"%img['id']
+			page_context={
+				'img':img,
+				'root_url':self.config.get("gallery","ROOT_URL"),
+			}
+			self.renderPage("viewimage.html",currPageName,page_context)
+
+		# generate video pages
+		vidid=0
+		for video_details in videos:
+			pageName="view_video_%s.html"%vidid
+			video_details['id']=vidid
+			self.renderPage("viewvideo.html",pageName,video_details)
+			vidid+=1
+
+
+		# merge video and photo records
+		media=[]
+		for img in images:
+			media.append(img)
+		for vid in videos:
+			media.append(vid)
+
+		pages=int(math.ceil((len(media)/float(imagesPerPage))))
+
 
 		page_context={
+			'root_url':self.config.get("gallery","ROOT_URL"),
 			'images_per_page':imagesPerPage,
 			'pages':pages,
-			'imagecount':len(images),
+			'imagecount':len(media),
 			'gallerytitle':self.config.get("gallery","title"),
 		}
 
-		if indexIsAlbumPage:
-			currPageName="index.html"
-			
-		else:
-			currPageName="page1.html"
-
-		# generate image pages
-		
+		page_context.update(extra_context)
 
 
 		pagelinks=[]
@@ -97,11 +216,16 @@ class Gallery:
 		page_context['pagelinks']=pagelinks
 
 		# generate album pages
+		if indexIsAlbumPage:
+			currPageName="index.html"
+			
+		else:
+			currPageName="page1.html"
 		for page in range(pages):
 			pageno=page+1
 			print "generating page %s"%pageno
-			page_images=images[page*imagesPerPage:pageno*imagesPerPage]
-			page_context['images']=page_images
+			page_media=media[page*imagesPerPage:pageno*imagesPerPage]
+			page_context['media']=page_media
 			page_context['pageno']=pageno
 
 			prevlink=None
@@ -143,23 +267,25 @@ class Gallery:
 		outfile.close()
 
 
-	def generateImages(self, images):
-		for imgdetails in images:
-			imgpath,imgname=imgdetails['path'],imgdetails['filename']
+	def generateImages(self, imageFilenames):
+		p = Pool()
 
-			imgtitle = imageprocessing.getTitle(imgpath,imgname)
-			imgdetails['title']=imgtitle
-			print "image title is %s"%imgtitle
-			print "processing %s"%imgpath
-			output_path=os.path.join(self.output_path,"small_%s"%imgname)
-			imgdetails['small']=output_path
-			print "generating small size"
-			imageprocessing.resizeAndSave(imgpath,(int(self.small_size[0]),int(self.small_size[1])),output_path)
+		password_protected=self.config.getboolean("gallery","password_protected")
+		if password_protected:
+			password_hash=hashlib.sha512(self.config.get("gallery","password")).hexdigest()
+			print "password hash is %s"%password_hash
+		else:
+			password_hash=""
 
-			output_path=os.path.join(self.output_path,"large_%s"%imgname)
-			imgdetails['large']=output_path
-			print "generating large size"
-			imageprocessing.resizeAndSave(imgpath,(int(self.large_size[0]),int(self.large_size[1])),output_path)
+
+		images=p.map(processImage,[[fn,self.output_path,self.small_size,self.large_size,password_hash] for fn in imageFilenames])
+
+		id=0
+		for img in images:
+			img['id']=id
+			img['type']='image'
+			id+=1
+
+		return images
 			
-
 

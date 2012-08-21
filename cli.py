@@ -33,7 +33,7 @@ def create(args):
 	print "%s project skeleton created."%project_name
 
 
-def gen(args):
+def getGallery():
 	config=ConfigParser.RawConfigParser()
 	configpath=os.path.join(os.getcwd(),"config.txt")
 
@@ -44,15 +44,18 @@ def gen(args):
 
 	config.readfp(configfile)
 
-	print "generating gallery '%s'"%config.get('gallery','title')
-
 	gal=gallery.Gallery(config,os.getcwd())
 
+	return gal
+
+def gen(args):
+	gal=getGallery()
 	gal.generate()
 	
 
 def upload(args):
-	pass
+	gal=getGallery()
+	gal.upload()
 
 
 def parse_args():

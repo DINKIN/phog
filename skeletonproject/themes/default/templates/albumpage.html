@@ -6,25 +6,50 @@
 <h1>{{gallerytitle}}</h1>
 </div>
 
-{% for image in images %}
-<div class="photocontainer">
-	<img src="small_{{image.filename}}" />
-	<div class="caption">
-		{{image.title}}<br />
-		<a href="">View Image / Comment</a>
-	</div>
-</div>
-
-{% endfor %}
-
-
-<div class="navigation">
+<div class="topnavigation">
 {% if prevlink %}
-<a href="{{prevlink}}">&lang;</a>
+<a href="{{prevlink}}">&lang;</a>&nbsp;&nbsp;
 {% endif %}
 
 {% for link in pagelinks %}
-<a href="{{link.link}}">{{link.title}}</a>
+{% if link.title==pageno %}
+<b>{{link.title}}</b>&nbsp;&nbsp;
+{% else %}
+<a href="{{link.link}}">{{link.title}}</a>&nbsp; &nbsp;
+{% endif %}
+{% endfor %}
+
+{% if nextlink %}
+<a href="{{nextlink}}">&rang;</a>
+{% endif %}
+</div>
+
+
+<div class="albumcontainer">
+{% for media in media %}
+<div class="photocontainer">
+	{% if media.type=='image' %}
+	<a href="view_photo_{{media.id}}.html"><img src="small_{{media.filename}}" alt="{{media.title}}" /></a>
+	<h3>{{media.title}}</h3>
+	{% else %}
+	<a href="view_video_{{media.id}}.html"><img src="{{media.filename}}" alt="{{media.title}}" /></a>
+	<h3>{{media.title}}</h3>
+	{% endif %}
+</div>
+{% endfor %}
+</div>
+
+<div class="navigation">
+{% if prevlink %}
+<a href="{{prevlink}}">&lang;</a>&nbsp;&nbsp;
+{% endif %}
+
+{% for link in pagelinks %}
+{% if link.title==pageno %}
+<b>{{link.title}}</b>&nbsp;&nbsp;
+{% else %}
+<a href="{{link.link}}">{{link.title}}</a>&nbsp; &nbsp;
+{% endif %}
 {% endfor %}
 
 {% if nextlink %}

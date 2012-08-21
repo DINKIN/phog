@@ -3,3 +3,4 @@ boto
 argparse
 PIL
 iptcinfo
+qtfaststart
