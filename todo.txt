@@ -3,7 +3,6 @@
  	* notification plugin api - email notifications, fb post plugin
  	* upload plugin api - boto upload plugin
 
- * rotate images based on exif
 
  * password protection
 
@@ -13,6 +12,5 @@
 
  * split comments out into seperate template fragment to allow switching system out
 
- * next/previous from within image page
 
  * other themes

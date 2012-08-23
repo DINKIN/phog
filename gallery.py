@@ -7,6 +7,7 @@ import hashlib
 from jinja2 import Environment, FileSystemLoader
 from multiprocessing import Pool, Queue
 from plugins import PluginManager
+import uuid
 
 RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html','viewvideo.html']
 
@@ -33,6 +34,19 @@ def processImage(config):
 	return returnmap
 
 
+class MediaObject:
+
+	TYPE_PHOTO=0
+	TYPE_VIDEO=1
+
+	def __init__(self,type=TYPE_PHOTO,thumb_path=None,source_path="",filename=""):
+		self.id=uuid.uuid4()
+		self.type=type
+		self.thumb_path=thumb_path
+		self.filename=filename
+		self.source_path=source_path
+
+
 class Gallery:
 
 
@@ -47,7 +61,14 @@ class Gallery:
 
 		if not os.path.exists(self.theme_path):
 			raise Exception("theme '%s' not found "%self.theme_name)
+		
+		themeconfigpath=os.path.join(self.theme_path,"config.txt")
 
+		if not os.path.exists(themeconfigpath):
+			raise Exception("couldn't find theme config.txt")
+
+		self.config.read(themeconfigpath)
+		
 		self.templates_path = os.path.join(self.theme_path,"templates")
 
 		self.template_path=os.path.join(root_path,"templates")
@@ -166,35 +187,49 @@ class Gallery:
 
 
 	def generatePages(self, images, videos, extra_context):
-		indexIsAlbumPage = self.config.getboolean("gallery","INDEX_IS_ALBUM_PAGE")
-		imagesPerPage = int(self.config.get("gallery","IMAGES_PER_PAGE"))
-
-		
-
-		# generate image pages
-		for img in images:
-			currPageName="view_photo_%s.html"%img['id']
-			page_context={
-				'img':img,
-				'root_url':self.config.get("gallery","ROOT_URL"),
-			}
-			self.renderPage("viewimage.html",currPageName,page_context)
-
-		# generate video pages
-		vidid=0
-		for video_details in videos:
-			pageName="view_video_%s.html"%vidid
-			video_details['id']=vidid
-			self.renderPage("viewvideo.html",pageName,video_details)
-			vidid+=1
-
+		indexIsAlbumPage = self.config.getboolean("theme","INDEX_IS_ALBUM_PAGE")
+		imagesPerPage = int(self.config.get("theme","IMAGES_PER_PAGE"))
 
 		# merge video and photo records
 		media=[]
 		for img in images:
+			currPageName="view_photo_%s.html"%img['id']
+			img['page_name']=currPageName
+
 			media.append(img)
+
+		vidid=0
 		for vid in videos:
+			pageName="view_video_%s.html"%vidid
+			vid['id']=vidid
+			vid['page_name']=pageName
 			media.append(vid)
+			vidid+=1
+
+		# set up previous and next links
+		for i in range(len(media)):
+			prevlink=None
+			nextlink=None
+			if i>0:
+				prevlink=media[i-1]['page_name']
+			if i<(len(media)-1):
+				nextlink=media[i+1]['page_name']
+			media[i]['next_link']=nextlink
+			media[i]['prev_link']=prevlink
+
+
+		# generate image pages
+		for img in images:
+			page_context={
+				'img':img,
+				'root_url':self.config.get("gallery","ROOT_URL"),
+			}
+			self.renderPage("viewimage.html",img['page_name'],page_context)
+
+		# generate video pages
+		for video_details in videos:
+			self.renderPage("viewvideo.html",video_details['page_name'],video_details)
+
 
 		pages=int(math.ceil((len(media)/float(imagesPerPage))))
 
@@ -247,7 +282,7 @@ class Gallery:
 		self.renderStaticPages(page_context)
 
 	def renderStaticPages(self,context):
-		indexIsAlbumPage = self.config.getboolean("gallery","INDEX_IS_ALBUM_PAGE")
+		indexIsAlbumPage = self.config.getboolean("theme","INDEX_IS_ALBUM_PAGE")
 		
 		if not indexIsAlbumPage:
 			self.renderPage("index.html","index.html",context)

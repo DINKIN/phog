@@ -12,6 +12,14 @@ body {
 	text-align: center;
 }
 
+.navlinks {
+	margin: 5px;
+}
+
+.navlinks a {
+  color: #fff;
+}
+
 .albumcontainer {
 
 	width: 80%;

@@ -19,6 +19,16 @@
 
 <div class="largeimagepage">
 
+<div class="navlinks">
+{% if prev_link %}
+<a href="{{prev_link}}">prev</a>
+&nbsp;-&nbsp;
+{% endif %}
+{% if next_link %}
+<a href="{{next_link}}">next</a>
+{% endif %}
+</div>
+
 <a style="display:block;width:{{width}}px;height:{{height}}px; margin: auto;" id="player"></a> 
 
 <script>

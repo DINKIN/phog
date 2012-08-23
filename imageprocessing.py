@@ -8,6 +8,35 @@ maxSize method by Andrius Miasnikovas
 http://andrius.miasnikovas.lt/2010/04/creating-thumbnails-from-photos-with-python-pil/
 """
 def maxSize(image, maxSize, thumbnail, method = 3):
+    exif=get_exif(image)
+    orientation=exif.get('Orientation',None)
+
+    if orientation!=None:
+    	if orientation == 1:
+            # Nothing
+            image = image.copy()
+        elif orientation == 2:
+            # Vertical Mirror
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 3:
+            # Rotation 180
+            image = image.transpose(Image.ROTATE_180)
+        elif orientation == 4:
+            # Horizontal Mirror
+            image = image.transpose(Image.FLIP_TOP_BOTTOM)
+        elif orientation == 5:
+            # Horizontal Mirror + Rotation 270
+            image = image.transpose(Image.FLIP_TOP_BOTTOM).transpose(Image.ROTATE_270)
+        elif orientation == 6:
+            # Rotation 270
+            image = image.transpose(Image.ROTATE_270)
+        elif orientation == 7:
+            # Vertical Mirror + Rotation 270
+            image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_270)
+        elif orientation == 8:
+            # Rotation 90
+            image = image.transpose(Image.ROTATE_90)
+
     imAspect = float(image.size[0])/float(image.size[1])
     outAspect = float(maxSize[0])/float(maxSize[1])
  

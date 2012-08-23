@@ -20,11 +20,10 @@ class VideoProcessor:
 		path,filename=os.path.split(video_path)
 		capfilename=filename[:filename.find(".")]+".jpg"
 		cap_path=os.path.join(path,capfilename)
-		capargs=[self.getFFMpeg(),"-itsoffset","-4","-i",video_path,"-vcodec","mjpeg","-vframes","1","-an","-f","rawvideo","-s","320x240",cap_path]
+		capargs=[self.getFFMpeg(),"-y","-itsoffset","-4","-i",video_path,"-vcodec","mjpeg","-vframes","1","-an","-f","rawvideo","-s","320x240",cap_path]
 
 		process = subprocess.Popen(capargs, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 		stdout, stderr = process.communicate()
-		print stdout
 
 		return capfilename
 
