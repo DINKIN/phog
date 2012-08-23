@@ -165,7 +165,9 @@ class Gallery:
 				shutil.copy(video.source_path,target_path)
 			else:
 				# transcode the others
-				target_path=os.path.join(self.output_path,video.filename[:video.filename.find(".")]+".m4v")
+				target_filename=video.filename[:video.filename.find(".")]+".m4v"
+				video.filename=target_filename
+				target_path=os.path.join(self.output_path,target_filename)
 
 				print "transcoding %s to %s"%(video.source_path,target_path)
 				params=vp.getSizeAndDuration(video.source_path)
@@ -174,7 +176,7 @@ class Gallery:
 			video.thumb_path=vp.getScreencap(video.source_path,self.output_path)
 
 			# get dimensions and duration
-			params=vp.getSizeAndDuration(video.source_path)
+			params=vp.getSizeAndDuration(os.path.join(self.output_path,video.filename))
 			video.width=params.get('width',None)
 			video.height=params.get('height',None)
 			video.hours=params.get('hours',None)
@@ -213,23 +215,6 @@ class Gallery:
 			media[i].prev_link=prevlink
 
 
-		# generate image pages
-		for img in images:
-			page_context={
-				'img':img,
-				'root_url':self.config.get("gallery","ROOT_URL"),
-			}
-			self.renderPage("viewimage.html",img.page,page_context)
-
-		# generate video pages
-		for video in videos:
-			page_context={
-				'video':video,
-				'root_url':self.config.get("gallery","ROOT_URL"),
-			}
-			self.renderPage("viewvideo.html",video.page,page_context)
-
-
 		pages=int(math.ceil((len(media)/float(imagesPerPage))))
 
 
@@ -252,13 +237,17 @@ class Gallery:
 		# generate album pages
 		if indexIsAlbumPage:
 			currPageName="index.html"
-			
 		else:
 			currPageName="page1.html"
 		for page in range(pages):
 			pageno=page+1
 			print "generating page %s"%pageno
 			page_media=media[page*imagesPerPage:pageno*imagesPerPage]
+
+			# set the owner page for the media items
+			for mediaitem in page_media:
+				mediaitem.home_page=currPageName
+
 			page_context['media']=page_media
 			page_context['pageno']=pageno
 
@@ -276,6 +265,23 @@ class Gallery:
 			
 			
 			currPageName="page%s.html"%(pageno+1)
+
+
+		# generate image pages
+		for img in images:
+			local_page_context={
+				'img':img,
+				'root_url':self.config.get("gallery","ROOT_URL"),
+			}
+			self.renderPage("viewimage.html",img.page,local_page_context)
+
+		# generate video pages
+		for video in videos:
+			local_page_context={
+				'video':video,
+				'root_url':self.config.get("gallery","ROOT_URL"),
+			}
+			self.renderPage("viewvideo.html",video.page,local_page_context)
 
 
 		self.renderStaticPages(page_context)
