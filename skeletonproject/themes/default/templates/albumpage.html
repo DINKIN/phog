@@ -28,11 +28,11 @@
 <div class="albumcontainer">
 {% for media in media %}
 <div class="photocontainer">
-	{% if media.type=='image' %}
+	{% if media.type==0 %}
 	<a href="view_photo_{{media.id}}.html"><img src="small_{{media.filename}}" alt="{{media.title}}" /></a>
 	<h3>{{media.title}}</h3>
 	{% else %}
-	<a href="view_video_{{media.id}}.html"><img src="{{media.filename}}" alt="{{media.title}}" /></a>
+	<a href="view_video_{{media.id}}.html"><img src="{{media.thumb_path}}" alt="{{media.title}}" /></a>
 	<h3>{{media.title}}</h3>
 	{% endif %}
 </div>

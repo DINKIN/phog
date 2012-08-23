@@ -14,35 +14,35 @@
 <script type="text/javascript" src="static/flowplayer-3.2.11.min.js"></script>
 
 <div class="header">
-<h1>{{video_name}}</h1>
+<h1>{{video.filename}}</h1>
 </div>
 
 <div class="largeimagepage">
 
 <div class="navlinks">
-{% if prev_link %}
-<a href="{{prev_link}}">prev</a>
+{% if video.prev_link %}
+<a href="{{video.prev_link}}">prev</a>
 &nbsp;-&nbsp;
 {% endif %}
-{% if next_link %}
-<a href="{{next_link}}">next</a>
+{% if video.next_link %}
+<a href="{{video.next_link}}">next</a>
 {% endif %}
 </div>
 
-<a style="display:block;width:{{width}}px;height:{{height}}px; margin: auto;" id="player"></a> 
+<a style="display:block;width:{{video.width}}px;height:{{video.height}}px; margin: auto;" id="player"></a> 
 
 <script>
 			flowplayer("player", "static/flowplayer-3.2.14.swf",{
 				clip: { autoPlay: true },
 				playlist: [
-				 '{{video_name}}',
+				 '{{video.filename}}',
 				],
 			});
 </script>
 
 <br /><br />
-<div class="fb-like" data-href="{{root_url}}view_video_{{id}}.html" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-colorscheme="dark" data-font="trebuchet ms"></div>
+<div class="fb-like" data-href="{{root_url}}view_video_{{video.id}}.html" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-colorscheme="dark" data-font="trebuchet ms"></div>
 <br /><br />
-<div class="fb-comments" data-href="/view_video_{{id}}.html" data-num-posts="3" data-width="470" data-colorscheme="dark"></div>
+<div class="fb-comments" data-href="/view_video_{{video.id}}.html" data-num-posts="3" data-width="470" data-colorscheme="dark"></div>
 </div>
 {% endblock %}

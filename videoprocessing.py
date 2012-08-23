@@ -16,16 +16,16 @@ class VideoProcessor:
 		return self.which("ffmpeg")
 		
 
-	def getScreencap(self,video_path):
+	def getScreencap(self,video_path,output_path):
 		path,filename=os.path.split(video_path)
 		capfilename=filename[:filename.find(".")]+".jpg"
-		cap_path=os.path.join(path,capfilename)
+		cap_path=os.path.join(output_path,capfilename)
 		capargs=[self.getFFMpeg(),"-y","-itsoffset","-4","-i",video_path,"-vcodec","mjpeg","-vframes","1","-an","-f","rawvideo","-s","320x240",cap_path]
 
 		process = subprocess.Popen(capargs, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 		stdout, stderr = process.communicate()
 
-		return capfilename
+		return cap_path
 
 
 	def trancodeRawVideo(self,source_path,target_path,video_params,video_target_size):
@@ -81,7 +81,11 @@ class VideoProcessor:
 		process = subprocess.Popen([ffmpegPath,  '-i', filename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 		stdout, stderr = process.communicate()
 
-		matches = re.search(r"Duration:\s{1}(?P<hours>\d+?):(?P<minutes>\d+?):(?P<seconds>\d+\.\d+?),", stdout, re.DOTALL).groupdict()
+		matches = re.search(r"Duration:\s{1}(?P<hours>\d+?):(?P<minutes>\d+?):(?P<seconds>\d+\.\d+?),", stdout, re.DOTALL)
+		if matches==None:
+			raise Exception("Couldn't get duration details for video %s"%filename)
+		else:
+			matches=matches.groupdict()
  	
  		matches.update(re.search(r"Video:.* (?P<width>\d+)x(?P<height>\d+)",stdout,re.DOTALL).groupdict())
 

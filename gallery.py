@@ -12,26 +12,25 @@ import uuid
 RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html','viewvideo.html']
 
 def processImage(config):
-	fileName,output_path,small_size,large_size,password_hash=config
-	print "processing %s"%fileName
-	imgpath,imgname=os.path.split(fileName)
-	returnmap={}
-	imgtitle = imageprocessing.getTitle(fileName,imgname)
-	returnmap['title']=imgtitle
-	returnmap['filename']=imgname
-			
-	img_output_path=os.path.join(output_path,"small_%s"%imgname)
-	returnmap['small']=img_output_path
-	real_img_output_path=os.path.join(output_path,"%ssmall_%s"%(password_hash,imgname))
-			
-	returnmap['smallsize']=imageprocessing.resizeAndSave(fileName,(int(small_size[0]),int(small_size[1])),real_img_output_path,thumbnail=True)
+	image,password_hash=config
+	print "processing %s"%image.filename
+	imgpath,imgname=image.source_path,image.filename
+	imgtitle = imageprocessing.getTitle(image.filename,imgname)
+	image.title=imgtitle
 
-	img_output_path=os.path.join(output_path,"large_%s"%imgname)
-	returnmap['large']=img_output_path
-	real_img_output_path=os.path.join(output_path,"%slarge_%s"%(password_hash,imgname))
 			
-	returnmap['largesize']=imageprocessing.resizeAndSave(fileName,(int(large_size[0]),int(large_size[1])),real_img_output_path)
-	return returnmap
+	img_output_path=os.path.join(image.output_path,"small_%s"%imgname)
+	image.small_path=img_output_path
+	real_img_output_path=os.path.join(image.output_path,"%ssmall_%s"%(password_hash,imgname))
+			
+	image.small_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_small_size[0]),int(image.target_small_size[1])),real_img_output_path,thumbnail=True)
+
+	img_output_path=os.path.join(image.output_path,"large_%s"%imgname)
+	image.large_path=img_output_path
+	real_img_output_path=os.path.join(image.output_path,"%slarge_%s"%(password_hash,imgname))
+			
+	image.large_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_large_size[0]),int(image.target_large_size[1])),real_img_output_path)
+	return image
 
 
 class MediaObject:
@@ -39,12 +38,23 @@ class MediaObject:
 	TYPE_PHOTO=0
 	TYPE_VIDEO=1
 
-	def __init__(self,type=TYPE_PHOTO,thumb_path=None,source_path="",filename=""):
+	def __init__(self,type=TYPE_PHOTO,thumb_path=None,source_path="",filename="",output_path=""):
 		self.id=uuid.uuid4()
 		self.type=type
 		self.thumb_path=thumb_path
 		self.filename=filename
 		self.source_path=source_path
+		self.output_path=output_path
+
+		if type==MediaObject.TYPE_VIDEO:
+			extension=filename.lower()[-3:]
+			self.transcoded=(extension in ['m4v','mp4'])
+
+	def __repr__(self):
+		if self.type==MediaObject.TYPE_PHOTO:
+			return "Photo - %s"%self.filename
+		elif self.type==MediaObject.TYPE_VIDEO:
+			return "Video - %s, pre-transcoded: %s"%(self.filename,self.transcoded)
 
 
 class Gallery:
@@ -94,13 +104,13 @@ class Gallery:
 
 	def generate(self):
 
-		imageFilenames=self.discoverImages()
+		images=self.discoverImages()
 
 		videos=self.discoverAndProcessVideos()
 
 		print videos
 
-		images=self.generateImages(imageFilenames)
+		images=self.generateImages(images)
 
 		# plugin call point - pre page generation, with images as arguments (to provide extra context for pages)
 		extra_context=self.pluginManager.prePageGeneration(self.config,self.source_image_path,self.source_video_path,images,videos)
@@ -128,61 +138,51 @@ class Gallery:
 		images=[]
 		for filename in os.listdir(self.source_image_path):
 			if filename.lower().find(".jpg")!=-1:
-				images.append(os.path.join(self.source_image_path,filename))
+				image=MediaObject(source_path=os.path.join(self.source_image_path,filename),filename=filename,output_path=self.output_path)
+				image.target_small_size=self.small_size
+				image.target_large_size=self.large_size
+				images.append(image)
 
 		print "%s images found"%len(images)
 		return images
 
 	def discoverAndProcessVideos(self):
-		transcoded_videos=[]
-		raw_videos=[]
-		for filename in os.listdir(self.source_video_path):
-			extension=filename.lower()[-3:]
-			if extension in ['m4v','mp4']:
-				transcoded_videos.append(filename)
-			elif extension in ['avi','mov','mvi','wmv']:
-				raw_videos.append(filename)
-
-		print "found raw videos, to be transcoded: %s"%raw_videos
-		print "found already transcoded videos: %s"%transcoded_videos
-
+		videos=[]
 		vp = videoprocessing.VideoProcessor()
 
-		completed_video_paths=[]
+		for filename in os.listdir(self.source_video_path):
+			video=MediaObject(type=MediaObject.TYPE_VIDEO,
+				filename=filename,
+				source_path=os.path.join(self.source_video_path,filename),
+				output_path=self.output_path)
 
-		# copy the already-transcoded videos to the output directory
-		for filename in transcoded_videos:
-			source_path=os.path.join(self.source_video_path,filename)
-			target_path=os.path.join(self.output_path,filename)
+			videos.append(video)
 
-			print "copying m4v video: %s"%source_path
-			shutil.copy(source_path,target_path)
-			completed_video_paths.append(target_path)
+			if video.transcoded:
+				# copy already transcoded video
+				target_path=os.path.join(self.output_path,video.filename)
+				print "copying m4v video: %s"%video.source_path
+				shutil.copy(video.source_path,target_path)
+			else:
+				# transcode the others
+				target_path=os.path.join(self.output_path,video.filename[:video.filename.find(".")]+".m4v")
 
-		# transcode the others
-		for filename in raw_videos:
-			source_path=os.path.join(self.source_video_path,filename)
-			target_path=os.path.join(self.output_path,filename[:filename.find(".")]+".m4v")
-
-			print "transcoding %s to %s"%(source_path,target_path)
-			params=vp.getSizeAndDuration(source_path)
-			vp.trancodeRawVideo(source_path,target_path,params,self.video_size)
-			completed_video_paths.append(target_path)
-
-
-		completed_videos=[]
-		for video_path in completed_video_paths:
-			# generate thumbnail
-			thumb_name=vp.getScreencap(video_path)
+				print "transcoding %s to %s"%(video.source_path,target_path)
+				params=vp.getSizeAndDuration(video.source_path)
+				vp.trancodeRawVideo(video.source_path,target_path,params,self.video_size)
+			
+			video.thumb_path=vp.getScreencap(video.source_path,self.output_path)
 
 			# get dimensions and duration
-			params=vp.getSizeAndDuration(video_path)
-			params['filename']=thumb_name
-			params['type']='video'
-			params['video_name']=os.path.split(video_path)[1]
-			completed_videos.append(params)
+			params=vp.getSizeAndDuration(video.source_path)
+			video.width=params.get('width',None)
+			video.height=params.get('height',None)
+			video.hours=params.get('hours',None)
+			video.minutes=params.get('minutes',None)
+			video.seconds=params.get('seconds',None)
+			
 
-		return completed_videos
+		return videos
 
 
 
@@ -192,30 +192,25 @@ class Gallery:
 
 		# merge video and photo records
 		media=[]
-		for img in images:
-			currPageName="view_photo_%s.html"%img['id']
-			img['page_name']=currPageName
+		media.extend(videos)
+		media.extend(images)
+		for mediaobject in media:
+			if mediaobject.type==MediaObject.TYPE_PHOTO:
+				mediaobject.page="view_photo_%s.html"%mediaobject.id
+			elif mediaobject.type==MediaObject.TYPE_VIDEO:
+				mediaobject.page="view_video_%s.html"%mediaobject.id
 
-			media.append(img)
-
-		vidid=0
-		for vid in videos:
-			pageName="view_video_%s.html"%vidid
-			vid['id']=vidid
-			vid['page_name']=pageName
-			media.append(vid)
-			vidid+=1
 
 		# set up previous and next links
 		for i in range(len(media)):
 			prevlink=None
 			nextlink=None
 			if i>0:
-				prevlink=media[i-1]['page_name']
+				prevlink=media[i-1].page
 			if i<(len(media)-1):
-				nextlink=media[i+1]['page_name']
-			media[i]['next_link']=nextlink
-			media[i]['prev_link']=prevlink
+				nextlink=media[i+1].page
+			media[i].next_link=nextlink
+			media[i].prev_link=prevlink
 
 
 		# generate image pages
@@ -224,11 +219,15 @@ class Gallery:
 				'img':img,
 				'root_url':self.config.get("gallery","ROOT_URL"),
 			}
-			self.renderPage("viewimage.html",img['page_name'],page_context)
+			self.renderPage("viewimage.html",img.page,page_context)
 
 		# generate video pages
-		for video_details in videos:
-			self.renderPage("viewvideo.html",video_details['page_name'],video_details)
+		for video in videos:
+			page_context={
+				'video':video,
+				'root_url':self.config.get("gallery","ROOT_URL"),
+			}
+			self.renderPage("viewvideo.html",video.page,page_context)
 
 
 		pages=int(math.ceil((len(media)/float(imagesPerPage))))
@@ -302,7 +301,7 @@ class Gallery:
 		outfile.close()
 
 
-	def generateImages(self, imageFilenames):
+	def generateImages(self, images):
 		p = Pool()
 
 		password_protected=self.config.getboolean("gallery","password_protected")
@@ -313,13 +312,9 @@ class Gallery:
 			password_hash=""
 
 
-		images=p.map(processImage,[[fn,self.output_path,self.small_size,self.large_size,password_hash] for fn in imageFilenames])
+		images=p.map(processImage,[[image,password_hash] for image in images])
 
-		id=0
-		for img in images:
-			img['id']=id
-			img['type']='image'
-			id+=1
+		print images
 
 		return images
 			
