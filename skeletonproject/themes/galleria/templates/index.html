@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block mainbody %}
+
+ <div id="galleria">
+    {% for mediaitem in media %}
+
+    	{% if mediaitem.type==0 %}
+ 			<a href="{{mediaitem.large_filename}}">
+                <img data-title="{{mediaitem.title}}"
+                     data-description="{{mediaitem.description}}"
+                     src="{{mediaitem.thumb_filename}}">
+            </a>
+
+        {% endif %}
+        {% if mediaitem.type==1 %}
+			<a href="{{mediaitem.large_filename}}">
+                <img data-title="{{mediaitem.title}}"
+                     data-description="{{mediaitem.description}}"
+                     src="{{mediaitem.thumb_filename}}">
+            </a>
+        {% endif %}
+
+    {% endfor %}
+ </div>
+
+
+<script>
+  // Load the classic theme
+  Galleria.loadTheme('static/galleria.classic.min.js');
+
+  // Initialize Galleria
+  Galleria.run('#galleria');
+</script>
+
+
+{% endblock %}

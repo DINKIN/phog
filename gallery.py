@@ -4,6 +4,7 @@ import videoprocessing
 import math
 import shutil
 import hashlib
+import ConfigParser
 from jinja2 import Environment, FileSystemLoader
 from multiprocessing import Pool, Queue
 from plugins import PluginManager
@@ -21,12 +22,14 @@ def processImage(config):
 			
 	img_output_path=os.path.join(image.output_path,"small_%s"%imgname)
 	image.small_path=img_output_path
+	image.thumb_filename="small_%s"%imgname
 	real_img_output_path=os.path.join(image.output_path,"%ssmall_%s"%(password_hash,imgname))
 			
 	image.small_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_small_size[0]),int(image.target_small_size[1])),real_img_output_path,thumbnail=True)
 
 	img_output_path=os.path.join(image.output_path,"large_%s"%imgname)
 	image.large_path=img_output_path
+	image.large_filename="large_%s"%imgname
 	real_img_output_path=os.path.join(image.output_path,"%slarge_%s"%(password_hash,imgname))
 			
 	image.large_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_large_size[0]),int(image.target_large_size[1])),real_img_output_path)
@@ -38,13 +41,14 @@ class MediaObject:
 	TYPE_PHOTO=0
 	TYPE_VIDEO=1
 
-	def __init__(self,type=TYPE_PHOTO,thumb_path=None,source_path="",filename="",output_path=""):
+	def __init__(self,type=TYPE_PHOTO,thumb_path=None,source_path="",filename="",thumb_filename="",output_path=""):
 		self.id=uuid.uuid4()
 		self.type=type
 		self.thumb_path=thumb_path
 		self.filename=filename
 		self.source_path=source_path
 		self.output_path=output_path
+		self.thumb_filename=thumb_filename
 
 		if type==MediaObject.TYPE_VIDEO:
 			extension=filename.lower()[-3:]
@@ -174,6 +178,7 @@ class Gallery:
 				vp.trancodeRawVideo(video.source_path,target_path,params,self.video_size)
 			
 			video.thumb_path=vp.getScreencap(video.source_path,self.output_path)
+			video.thumb_filename=os.path.split(video.thumb_path)[1]
 
 			# get dimensions and duration
 			params=vp.getSizeAndDuration(os.path.join(self.output_path,video.filename))
@@ -182,6 +187,7 @@ class Gallery:
 			video.hours=params.get('hours',None)
 			video.minutes=params.get('minutes',None)
 			video.seconds=params.get('seconds',None)
+			video.title=filename
 			
 
 		return videos
@@ -189,8 +195,11 @@ class Gallery:
 
 
 	def generatePages(self, images, videos, extra_context):
-		indexIsAlbumPage = self.config.getboolean("theme","INDEX_IS_ALBUM_PAGE")
-		imagesPerPage = int(self.config.get("theme","IMAGES_PER_PAGE"))
+		try:
+			ajaxTheme = self.config.get("theme","AJAX_THEME")
+		except ConfigParser.NoOptionError:
+			ajaxTheme = False
+
 
 		# merge video and photo records
 		media=[]
@@ -201,6 +210,31 @@ class Gallery:
 				mediaobject.page="view_photo_%s.html"%mediaobject.id
 			elif mediaobject.type==MediaObject.TYPE_VIDEO:
 				mediaobject.page="view_video_%s.html"%mediaobject.id
+
+		if ajaxTheme:
+			return self.generateAjaxPage(media,extra_context)
+		else:
+			return self.generatePlainPages(media,extra_context)
+
+
+	def generateAjaxPage(self, media, extra_context):
+
+		page_context={
+			'root_url':self.config.get("gallery","ROOT_URL"),
+			'imagecount':len(media),
+			'media':media,
+			'gallerytitle':self.config.get("gallery","title"),
+		}
+
+		page_context.update(extra_context)
+
+		self.renderPage("index.html","index.html",page_context)
+		self.renderStaticPages(page_context)
+
+
+	def generatePlainPages(self, media, extra_context):
+		indexIsAlbumPage = self.config.getboolean("theme","INDEX_IS_ALBUM_PAGE")
+		imagesPerPage = int(self.config.get("theme","IMAGES_PER_PAGE"))
 
 
 		# set up previous and next links
@@ -267,21 +301,21 @@ class Gallery:
 			currPageName="page%s.html"%(pageno+1)
 
 
-		# generate image pages
-		for img in images:
-			local_page_context={
-				'img':img,
-				'root_url':self.config.get("gallery","ROOT_URL"),
-			}
-			self.renderPage("viewimage.html",img.page,local_page_context)
+		# generate image and video view pages
+		for mediaitem in media:
+			if mediaitem.type==MediaObject.TYPE_PHOTO:
+				local_page_context={
+					'img':mediaitem,
+					'root_url':self.config.get("gallery","ROOT_URL"),
+				}
+				self.renderPage("viewimage.html",mediaitem.page,local_page_context)
 
-		# generate video pages
-		for video in videos:
-			local_page_context={
-				'video':video,
-				'root_url':self.config.get("gallery","ROOT_URL"),
-			}
-			self.renderPage("viewvideo.html",video.page,local_page_context)
+			if mediaitem.type==MediaObject.TYPE_VIDEO:
+				local_page_context={
+					'video':mediaitem,
+					'root_url':self.config.get("gallery","ROOT_URL"),
+				}
+				self.renderPage("viewvideo.html",mediaitem.page,local_page_context)
 
 
 		self.renderStaticPages(page_context)
