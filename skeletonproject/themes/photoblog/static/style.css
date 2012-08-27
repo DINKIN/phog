@@ -1,0 +1,119 @@
+body {
+	background: #302E2C;
+	color: #fff;
+}
+
+.largeimage {
+	height: 80%;
+	border: 1px solid #aabbcc;
+}
+
+.largeimagepage {
+	text-align: center;
+}
+
+.navlinks {
+	margin: 5px;
+}
+
+.navlinks a {
+  color: #fff;
+}
+
+.albumcontainer {
+
+	width: 80%;
+	margin: 30px auto;
+	overflow: hidden;
+}
+
+.photocontainer {
+	width: 16%;
+	margin:  2% 2% 50px 2%;
+	float: left;
+	text-align: center;
+	height: 120px;
+}
+
+.photocontainer img {
+	max-width: 100%;
+	border: 1px solid #aabbcc;
+}
+
+.photocontainer h3 {
+	font-family: Didot, "Didot LT STD", "Hoefler Text", Garamond, "Times New Roman", serif;
+	font-size: 12pt;
+}
+
+.photocontainer p {
+	font-family: Didot, "Didot LT STD", "Hoefler Text", Garamond, "Times New Roman", serif;
+
+}
+
+.header {
+	width: 100%;
+	text-align: left;
+	margin: 0px 0px 10px 0px;
+	border-bottom: 1px solid #424242;
+	padding-left: 10px;
+
+	font-variant: small-caps;
+	font-family: Didot, "Didot LT STD", "Hoefler Text", Garamond, "Times New Roman", serif;
+
+}
+
+.header h1 {
+	margin-bottom: 0px;
+}
+
+.navigation {
+	width: 100%;
+	margin: 30px 0px 0px 0px;
+	padding-top: 10px;
+	border-top: 1px solid #424242;
+	text-align: center;
+ 	font-family: Baskerville, "Baskerville Old Face", "Hoefler Text", Garamond, "Times New Roman", serif;
+}
+
+.topnavigation {
+	width: 100%;
+	margin: 0px 0px 30px 0px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #424242;
+	text-align: center;
+ 	font-family: Baskerville, "Baskerville Old Face", "Hoefler Text", Garamond, "Times New Roman", serif;
+}
+
+.topnavigation a {
+	color: #fff;
+}
+.navigation a {
+	color: #fff;
+}
+
+/* MEDIA QUERIES*/
+@media only screen and (max-width : 940px),
+only screen and (max-device-width : 940px){
+	.photocontainer {width: 21%;}
+}
+
+@media only screen and (max-width : 720px),
+only screen and (max-device-width : 720px){
+	.photocontainer {width: 29.33333%;}
+	.header h1 {font-size: 40px;}
+}
+
+@media only screen and (max-width : 530px),
+only screen and (max-device-width : 530px){
+	.photocontainer {width: 46%;}
+	.header h1 {font-size: 28px;}
+}
+
+@media only screen and (max-width : 320px),
+only screen and (max-device-width : 320px){
+	.photocontainer {width: 96%;}
+	.photocontainer img {width: 96%;}
+	.photocontainer h3 {font-size: 18px;}
+	.photocontainer p, .header p {font-size: 18px;}
+	.header h1 {font-size: 70px;}
+}

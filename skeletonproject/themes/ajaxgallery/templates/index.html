@@ -14,7 +14,7 @@
     {% for mediaitem in media %}
 
     	{% if mediaitem.type==0 %} <!-- photo -->
- 			<a class="protectableitem" href="{{mediaitem.large_filename}}" data-title="{{mediaitem.title}}">
+ 			      <a class="protectableitem" href="{{mediaitem.large_filename}}" data-title="{{mediaitem.title}}">
                 <img class="protectableitem" data-title="{{mediaitem.title}}"
                      data-description="{{mediaitem.description}}"
                      data-comment-url="{{root_url}}#{{mediaitem.id}}"
@@ -23,7 +23,7 @@
 
         {% endif %}
         {% if mediaitem.type==1 %} <!-- video -->
-			<a class="protectableitem" href="{{mediaitem.filename}}" data-title="{{mediaitem.title}}">
+			      <a class="protectableitem" href="{{mediaitem.filename}}" data-title="{{mediaitem.title}}">
                 <img class="protectableitem" data-title="{{mediaitem.title}}"
                      data-description="{{mediaitem.description}}"
 					           data-comment-url="{{root_url}}#{{mediaitem.id}}"

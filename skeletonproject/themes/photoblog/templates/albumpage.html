@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block mainbody %}
+
+<div class="header">
+<h1>{{gallerytitle}}</h1>
+</div>
+
+<div class="topnavigation">
+{% if prevlink %}
+<a href="{{prevlink}}">&lang;</a>&nbsp;&nbsp;
+{% endif %}
+
+{% for link in pagelinks %}
+{% if link.title==pageno %}
+<b>{{link.title}}</b>&nbsp;&nbsp;
+{% else %}
+<a href="{{link.link}}">{{link.title}}</a>&nbsp; &nbsp;
+{% endif %}
+{% endfor %}
+
+{% if nextlink %}
+<a href="{{nextlink}}">&rang;</a>
+{% endif %}
+</div>
+
+
+<div class="albumcontainer">
+{% for media in media %}
+<div class="photocontainer">
+	{% if media.type==0 %}
+	<a href="view_photo_{{media.id}}.html"><img src="{{media.thumb_filename}}" alt="{{media.title}}" /></a>
+	<h3>{{media.title}}</h3>
+	{% else %}
+	<a href="view_video_{{media.id}}.html"><img src="{{media.thumb_filename}}" alt="{{media.title}}" /></a>
+	<h3>{{media.title}}</h3>
+	{% endif %}
+</div>
+{% endfor %}
+</div>
+
+<div class="navigation">
+{% if prevlink %}
+<a href="{{prevlink}}">&lang;</a>&nbsp;&nbsp;
+{% endif %}
+
+{% for link in pagelinks %}
+{% if link.title==pageno %}
+<b>{{link.title}}</b>&nbsp;&nbsp;
+{% else %}
+<a href="{{link.link}}">{{link.title}}</a>&nbsp; &nbsp;
+{% endif %}
+{% endfor %}
+
+{% if nextlink %}
+<a href="{{nextlink}}">&rang;</a>
+{% endif %}
+</div>
+
+{% endblock %}

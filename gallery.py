@@ -196,10 +196,9 @@ class Gallery:
 
 	def generatePages(self, images, videos, extra_context):
 		try:
-			ajaxTheme = self.config.get("theme","AJAX_THEME")
+			themeMode = self.config.get("theme","THEME_MODE")
 		except ConfigParser.NoOptionError:
-			ajaxTheme = False
-
+			themeMode = 'static'
 
 		# merge video and photo records
 		media=[]
@@ -211,13 +210,19 @@ class Gallery:
 			elif mediaobject.type==MediaObject.TYPE_VIDEO:
 				mediaobject.page="view_video_%s.html"%mediaobject.id
 
-		if ajaxTheme:
-			return self.generateAjaxPage(media,extra_context)
-		else:
+		if themeMode=='ajax':
+			return self.generateAjaxPages(media,extra_context)
+		elif themeMode=='static':
 			return self.generatePlainPages(media,extra_context)
+		elif themeMode=='blog':
+			return self.generateBlogPages(media,extra_context)
+		else:
+			raise Exception("unknown mode in theme")
 
+	def generateBlogPages(self, media, extra_context):
+		pass
 
-	def generateAjaxPage(self, media, extra_context):
+	def generateAjaxPages(self, media, extra_context):
 
 		page_context={
 			'root_url':self.config.get("gallery","ROOT_URL"),
