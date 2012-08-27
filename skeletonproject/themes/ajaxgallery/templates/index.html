@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block mainbody %}
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "http://connect.facebook.net/en_GB/all.js#xfbml=1&appId=202185246482667";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+ <div id="galleria">
+    {% for mediaitem in media %}
+
+    	{% if mediaitem.type==0 %} <!-- photo -->
+ 			<a class="protectableitem" href="{{mediaitem.large_filename}}" data-title="{{mediaitem.title}}">
+                <img class="protectableitem" data-title="{{mediaitem.title}}"
+                     data-description="{{mediaitem.description}}"
+                     data-comment-url="{{root_url}}#{{mediaitem.id}}"
+                     src="{{mediaitem.thumb_filename}}">
+            </a>
+
+        {% endif %}
+        {% if mediaitem.type==1 %} <!-- video -->
+			<a class="protectableitem" href="{{mediaitem.filename}}" data-title="{{mediaitem.title}}">
+                <img class="protectableitem" data-title="{{mediaitem.title}}"
+                     data-description="{{mediaitem.description}}"
+					           data-comment-url="{{root_url}}#{{mediaitem.id}}"
+                     src="{{mediaitem.thumb_filename}}">
+            </a>
+        {% endif %}
+
+    {% endfor %}
+ </div>
+
+<div id="comments-dialog">
+
+</div>
+
+<div id="password-dialog">
+  <input type="password" />
+</div>
+
+<script>
+  $("#comments-dialog").dialog({ autoOpen: false, minWidth:505, minHeight: 500, title: 'Comments' });
+
+  // Load the classic theme
+  Galleria.loadTheme('static/galleria.cloudgallery.js');
+
+  function showComments() {
+    $("#comments-dialog").dialog("open");
+  }
+
+  {% if password_protected %}
+  var pg = new ProtectedGallery("password-dialog");
+  pg.passwordPrompt();
+  {% else %}
+  // Initialize Galleria
+  Galleria.run('#galleria');
+  {% endif %}
+
+ 
+
+
+</script>
+
+
+{% endblock %}

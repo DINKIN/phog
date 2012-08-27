@@ -1,3 +1,0 @@
-[theme]
-IMAGES_PER_PAGE=15
-INDEX_IS_ALBUM_PAGE=False

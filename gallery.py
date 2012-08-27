@@ -10,7 +10,7 @@ from multiprocessing import Pool, Queue
 from plugins import PluginManager
 import uuid
 
-RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html','viewvideo.html']
+RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html','viewvideo.html','embedvideo.html']
 
 def processImage(config):
 	image,password_hash=config
@@ -223,12 +223,23 @@ class Gallery:
 			'root_url':self.config.get("gallery","ROOT_URL"),
 			'imagecount':len(media),
 			'media':media,
+			'password_protected':self.config.getboolean("gallery","password_protected"),
 			'gallerytitle':self.config.get("gallery","title"),
 		}
 
 		page_context.update(extra_context)
 
 		self.renderPage("index.html","index.html",page_context)
+
+		# create video embed pages
+		for mediaitem in media:
+			if mediaitem.type==MediaObject.TYPE_VIDEO:
+				local_page_context={
+					'video':mediaitem,
+					'root_url':self.config.get("gallery","ROOT_URL"),
+				}
+				self.renderPage("embedvideo.html","embed_%s.html"%mediaitem.filename,local_page_context)
+
 		self.renderStaticPages(page_context)
 
 

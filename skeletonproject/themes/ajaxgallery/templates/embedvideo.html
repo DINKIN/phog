@@ -1,0 +1,28 @@
+<html>
+<head>
+	<link rel="stylesheet" href="static/style.css" />
+</head>
+<body>
+
+<script type="text/javascript" src="static/flowplayer-3.2.11.min.js"></script>
+
+
+
+
+
+
+
+<a style="display:block; margin: auto; height: 97%;" id="player"></a> 
+
+<script>
+			flowplayer("player", "static/flowplayer-3.2.14.swf",{
+				clip: { autoPlay: false, scaling: 'fit' },
+				playlist: [
+				 '{{video.filename}}',
+				],
+			});
+</script>
+
+
+</body>
+</html>

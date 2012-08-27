@@ -113,54 +113,21 @@ var undef,
 
     // video providers
     _video = {
-        youtube: {
-            reg: /https?:\/\/(?:[a-zA_Z]{2,3}.)?(?:youtube\.com\/watch\?)((?:[\w\d\-\_\=]+&amp;(?:amp;)?)*v(?:&lt;[A-Z]+&gt;)?=([0-9a-zA-Z\-\_]+))/i,
-            embed: function(id) {
-                return 'http://www.youtube.com/embed/'+id;
-            },
-            getThumb: function( id, success, fail ) {
-                fail = fail || F;
-                $.getJSON('http://gdata.youtube.com/feeds/api/videos/' + id + '?v=2&alt=json-in-script&callback=?', function(data) {
-                    try {
-                        success( data.entry.media$group.media$thumbnail[0].url );
-                    } catch(e) {
-                        fail();
-                    }
-                }).error(fail);
-            }
+        cloudgallery: {
+           reg: /(.*\.m4v|\.mp4)/,
+           embed: function(id) {
+                return 'embed_'+id+".html";
+           },
+           getThumb: function( id, success, fail) {
+                try {
+                    success( id+".jpg" );
+                } catch(e) {
+                    fail();
+                } 
+           }
         },
-        vimeo: {
-            reg: /https?:\/\/(?:www\.)?(vimeo\.com)\/(?:hd#)?([0-9]+)/i,
-            embed: function(id) {
-                return 'http://player.vimeo.com/video/'+id;
-            },
-            getThumb: function( id, success, fail ) {
-                fail = fail || F;
-                $.getJSON('http://vimeo.com/api/v2/video/' + id + '.json?callback=?', function(data) {
-                    try {
-                        success( data[0].thumbnail_medium );
-                    } catch(e) {
-                        fail();
-                    }
-                }).error(fail);
-            }
-        },
-        dailymotion: {
-            reg: /https?:\/\/(?:www\.)?(dailymotion\.com)\/video\/([^_]+)/,
-            embed: function(id) {
-                return 'http://www.dailymotion.com/embed/video/'+id;
-            },
-            getThumb: function( id, success, fail ) {
-                fail = fail || F;
-                $.getJSON('https://api.dailymotion.com/video/'+id+'?fields=thumbnail_medium_url&callback=?', function(data) {
-                    try {
-                        success( data.thumbnail_medium_url );
-                    } catch(e) {
-                        fail();
-                    }
-                }).error(fail);
-            }
-        }
+        
+       
     },
 
     // utility for testing the video URL and getting the video ID
@@ -170,7 +137,7 @@ var undef,
             match = url && url.match( _video[v].reg );
             if( match && match.length ) {
                 return {
-                    id: match[2],
+                    id: match[1],
                     provider: v
                 };
             }
@@ -3426,7 +3393,7 @@ Galleria.prototype = {
                 }
 
                 // alternative extraction from HTML5 data attribute, added in 1.2.7
-                $.each( 'big title description link layer'.split(' '), function( i, val ) {
+                $.each( 'big title comment-url description link layer'.split(' '), function( i, val ) {
                     if ( elem.data(val) ) {
                         data[ val ] = elem.data(val);
                     }
