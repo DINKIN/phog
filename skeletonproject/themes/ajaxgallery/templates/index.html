@@ -39,7 +39,7 @@
 </div>
 
 <div id="password-dialog">
-  <input type="password" />
+  <input type="password" id="passwordinput" />
 </div>
 
 <script>
@@ -53,7 +53,7 @@
   }
 
   {% if password_protected %}
-  var pg = new ProtectedGallery("password-dialog");
+  var pg = new ProtectedGallery("password-dialog","passwordinput");
   pg.passwordPrompt();
   {% else %}
   // Initialize Galleria

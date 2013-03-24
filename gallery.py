@@ -13,7 +13,11 @@ import uuid
 RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html','viewvideo.html','embedvideo.html']
 
 def processImage(config):
-	image,password_hash=config
+	image,password=config
+
+	print "hashing with %s_%s"%("small_%s"%image.filename,password)
+	password_hash=hashlib.sha512("small_%s"%image.filename+"_"+password).hexdigest()
+	print "hash is %s"%password_hash
 	print "processing %s"%image.filename
 	imgpath,imgname=image.source_path,image.filename
 	imgtitle = imageprocessing.getTitle(image.filename,imgname)
@@ -26,6 +30,10 @@ def processImage(config):
 	real_img_output_path=os.path.join(image.output_path,"%ssmall_%s"%(password_hash,imgname))
 			
 	image.small_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_small_size[0]),int(image.target_small_size[1])),real_img_output_path,thumbnail=True)
+
+	print "hashing with %s_%s"%("large_%s"%image.filename,password)
+	password_hash=hashlib.sha512("large_%s"%image.filename+"_"+password).hexdigest()
+	print "hash is %s"%password_hash
 
 	img_output_path=os.path.join(image.output_path,"large_%s"%imgname)
 	image.large_path=img_output_path
@@ -362,13 +370,13 @@ class Gallery:
 
 		password_protected=self.config.getboolean("gallery","password_protected")
 		if password_protected:
-			password_hash=hashlib.sha512(self.config.get("gallery","password")).hexdigest()
-			print "password hash is %s"%password_hash
+			password=self.config.get("gallery","password")
+			print "password is %s"%password
 		else:
-			password_hash=""
+			password=""
 
 
-		images=p.map(processImage,[[image,password_hash] for image in images])
+		images=p.map(processImage,[[image,password] for image in images])
 
 		print images
 
