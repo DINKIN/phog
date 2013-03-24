@@ -7,75 +7,75 @@ import gallery
 
 
 def create(args):
-	project_name=vars(args)['name']
-	print "creating skeleton project named '%s'"%project_name
+    project_name=vars(args)['name']
+    print "creating skeleton project named '%s'"%project_name
 
-	project_path=os.path.join(os.getcwd(),project_name)
+    project_path=os.path.join(os.getcwd(),project_name)
 
-	if os.path.exists(project_path):
-		print "Project directory '%s' already exists"%project_path
-		sys.exit(-1)
+    if os.path.exists(project_path):
+        print "Project directory '%s' already exists"%project_path
+        sys.exit(-1)
 
-	skeletonpath=os.path.join(os.path.dirname(__file__),'skeletonproject')
+    skeletonpath=os.path.join(os.path.dirname(__file__),'skeletonproject')
 
-	shutil.copytree(skeletonpath,project_path)
+    shutil.copytree(skeletonpath,project_path)
 
-	config_path = os.path.join(project_path,'config.txt')
+    config_path = os.path.join(project_path,'config.txt')
 
-	config = ConfigParser.RawConfigParser()
-	config.readfp(open(config_path))
+    config = ConfigParser.RawConfigParser()
+    config.readfp(open(config_path))
 
-	config.set('gallery','shortname',project_name)
-	config.set('gallery','title',raw_input("Enter gallery title:"))
+    config.set('gallery','shortname',project_name)
+    config.set('gallery','title',raw_input("Enter gallery title:"))
 
-	config.write(open(config_path,"w"))
+    config.write(open(config_path,"w"))
 
-	print "%s project skeleton created."%project_name
+    print "%s project skeleton created."%project_name
 
 
 def getGallery():
-	config=ConfigParser.RawConfigParser()
-	configpath=os.path.join(os.getcwd(),"config.txt")
+    config=ConfigParser.RawConfigParser()
+    configpath=os.path.join(os.getcwd(),"config.txt")
 
-	if not os.path.exists(configpath):
-		print "couldn't find config.txt"
+    if not os.path.exists(configpath):
+        print "couldn't find config.txt"
 
-	configfile=open(configpath)
+    configfile=open(configpath)
 
-	config.readfp(configfile)
+    config.readfp(configfile)
 
-	gal=gallery.Gallery(config,os.getcwd())
+    gal=gallery.Gallery(config,os.getcwd())
 
-	return gal
+    return gal
 
 def gen(args):
-	gal=getGallery()
-	gal.generate()
-	
+    gal=getGallery()
+    gal.generate()
+    
 
 def upload(args):
-	gal=getGallery()
-	gal.upload()
+    gal=getGallery()
+    gal.upload()
 
 
 def parse_args():
-	parser = argparse.ArgumentParser(description="Galleria S3 Image Gallery Tool")
-	subparsers=parser.add_subparsers()
+    parser = argparse.ArgumentParser(description="Galleria S3 Image Gallery Tool")
+    subparsers=parser.add_subparsers()
 
-	create_parser = subparsers.add_parser('create', help="create help")
-	create_parser.add_argument('name',help="name of the project")
-	create_parser.set_defaults(func=create)
+    create_parser = subparsers.add_parser('create', help="create help")
+    create_parser.add_argument('name',help="name of the project")
+    create_parser.set_defaults(func=create)
 
-	gen_parser = subparsers.add_parser('gen',help="gen help")
-	gen_parser.set_defaults(func=gen)
+    gen_parser = subparsers.add_parser('gen',help="gen help")
+    gen_parser.set_defaults(func=gen)
 
-	upload_parser = subparsers.add_parser('upload',help="upload help")
-	upload_parser.set_defaults(func=upload)
+    upload_parser = subparsers.add_parser('upload',help="upload help")
+    upload_parser.set_defaults(func=upload)
 
-	args=parser.parse_args()
-	print "Galleria - S3 Gallery Generator"
-	args.func(args)
+    args=parser.parse_args()
+    print "Galleria - S3 Gallery Generator"
+    args.func(args)
 
 
 if __name__=="__main__":
-	parse_args()
+    parse_args()

@@ -12,7 +12,7 @@ def maxSize(image, maxSize, thumbnail, method = 3):
     orientation=exif.get('Orientation',None)
 
     if orientation!=None:
-    	if orientation == 1:
+        if orientation == 1:
             # Nothing
             image = image.copy()
         elif orientation == 2:
@@ -41,8 +41,8 @@ def maxSize(image, maxSize, thumbnail, method = 3):
     outAspect = float(maxSize[0])/float(maxSize[1])
  
     if thumbnail:
-    	width=maxSize[0]
-    	height=int(float(maxSize[0])/float(image.size[0])*float(image.size[1]))
+        width=maxSize[0]
+        height=int(float(maxSize[0])/float(image.size[0])*float(image.size[1]))
         inter_image=image.resize((width, height), method)
         offset=int(float(height-maxSize[1])/4.0)
         return inter_image.crop((0,offset,width,offset+maxSize[1]))
@@ -53,24 +53,24 @@ def maxSize(image, maxSize, thumbnail, method = 3):
  
 
 def resizeAndSave(imgpath,size,destpath,thumbnail=False):
-	img = Image.open(imgpath)
-	newimg = maxSize(img,size,thumbnail,Image.BILINEAR)
-	newimg.save(destpath) 
-	return newimg.size
+    img = Image.open(imgpath)
+    newimg = maxSize(img,size,thumbnail,Image.BILINEAR)
+    newimg.save(destpath) 
+    return newimg.size
 
 def get_exif(i):
-	ret = {}
-	info = i._getexif()
-	for tag, value in info.items():
-		decoded = TAGS.get(tag, tag)
-		ret[decoded] = value
-	return ret
+    ret = {}
+    info = i._getexif()
+    for tag, value in info.items():
+        decoded = TAGS.get(tag, tag)
+        ret[decoded] = value
+    return ret
 
 def getTitle(filepath,filename):
-	# try to get the ITPC title (from Lightroom), fall back to image filename
-	filename=filename[0:filename.lower().find(".jpg")]
-	try:
-		info=IPTCInfo(filepath)
-		return info.data.get(5,filename)
-	except:
-		return filename
+    # try to get the ITPC title (from Lightroom), fall back to image filename
+    filename=filename[0:filename.lower().find(".jpg")]
+    try:
+        info=IPTCInfo(filepath)
+        return info.data.get(5,filename)
+    except:
+        return filename
