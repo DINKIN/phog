@@ -13,34 +13,23 @@ import uuid
 RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html','viewvideo.html','embedvideo.html']
 
 def processImage(config):
-	image,password=config
+	image=config
 
-	print "hashing with %s_%s"%("small_%s"%image.filename,password)
-	password_hash=hashlib.sha512("small_%s"%image.filename+"_"+password).hexdigest()
-	print "hash is %s"%password_hash
-	print "processing %s"%image.filename
 	imgpath,imgname=image.source_path,image.filename
 	imgtitle = imageprocessing.getTitle(image.filename,imgname)
 	image.title=imgtitle
 
-			
 	img_output_path=os.path.join(image.output_path,"small_%s"%imgname)
 	image.small_path=img_output_path
 	image.thumb_filename="small_%s"%imgname
-	real_img_output_path=os.path.join(image.output_path,"%ssmall_%s"%(password_hash,imgname))
 			
-	image.small_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_small_size[0]),int(image.target_small_size[1])),real_img_output_path,thumbnail=True)
-
-	print "hashing with %s_%s"%("large_%s"%image.filename,password)
-	password_hash=hashlib.sha512("large_%s"%image.filename+"_"+password).hexdigest()
-	print "hash is %s"%password_hash
+	image.small_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_small_size[0]),int(image.target_small_size[1])),img_output_path,thumbnail=True)
 
 	img_output_path=os.path.join(image.output_path,"large_%s"%imgname)
 	image.large_path=img_output_path
 	image.large_filename="large_%s"%imgname
-	real_img_output_path=os.path.join(image.output_path,"%slarge_%s"%(password_hash,imgname))
 			
-	image.large_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_large_size[0]),int(image.target_large_size[1])),real_img_output_path)
+	image.large_size=imageprocessing.resizeAndSave(image.source_path,(int(image.target_large_size[0]),int(image.target_large_size[1])),img_output_path)
 	return image
 
 
@@ -236,7 +225,6 @@ class Gallery:
 			'root_url':self.config.get("gallery","ROOT_URL"),
 			'imagecount':len(media),
 			'media':media,
-			'password_protected':self.config.getboolean("gallery","password_protected"),
 			'gallerytitle':self.config.get("gallery","title"),
 		}
 
@@ -368,15 +356,7 @@ class Gallery:
 	def generateImages(self, images):
 		p = Pool()
 
-		password_protected=self.config.getboolean("gallery","password_protected")
-		if password_protected:
-			password=self.config.get("gallery","password")
-			print "password is %s"%password
-		else:
-			password=""
-
-
-		images=p.map(processImage,[[image,password] for image in images])
+		images=p.map(processImage,[[image] for image in images])
 
 		print images
 
