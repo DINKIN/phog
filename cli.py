@@ -59,7 +59,7 @@ def upload(args):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Galleria S3 Image Gallery Tool")
+    parser = argparse.ArgumentParser(description="Phog Image Gallery Generator")
     subparsers=parser.add_subparsers()
 
     create_parser = subparsers.add_parser('create', help="create help")
@@ -73,7 +73,7 @@ def parse_args():
     upload_parser.set_defaults(func=upload)
 
     args=parser.parse_args()
-    print "Galleria - S3 Gallery Generator"
+    print "Phog - Static Gallery Generator"
     args.func(args)
 
 

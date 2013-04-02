@@ -13,7 +13,7 @@ import uuid
 RESERVED_TEMPLATES=['base.html','index.html','albumpage.html','viewimage.html','viewvideo.html','embedvideo.html']
 
 def processImage(config):
-    image=config
+    image=config[0]
 
     imgpath,imgname=image.source_path,image.filename
     imgtitle = imageprocessing.getTitle(image.filename,imgname)
@@ -211,13 +211,8 @@ class Gallery:
             return self.generateAjaxPages(media,extra_context)
         elif themeMode=='static':
             return self.generatePlainPages(media,extra_context)
-        elif themeMode=='blog':
-            return self.generateBlogPages(media,extra_context)
         else:
             raise Exception("unknown mode in theme")
-
-    def generateBlogPages(self, media, extra_context):
-        pass
 
     def generateAjaxPages(self, media, extra_context):
 
@@ -275,7 +270,10 @@ class Gallery:
 
         pagelinks=[]
         for page in range(pages):
-            pagelinks.append({'title':(int(page)+1),'link':"page%s.html"%(int(page)+1)})
+            if page==0 and indexIsAlbumPage:
+                pagelinks.append({'title':(int(page)+1),'link':"index.html"})
+            else:
+                pagelinks.append({'title':(int(page)+1),'link':"page%s.html"%(int(page)+1)})
         page_context['pagelinks']=pagelinks
 
         # generate album pages

@@ -28,11 +28,10 @@ body {
 }
 
 .photocontainer {
-	width: 16%;
+	width: 100%;
 	margin:  2% 2% 50px 2%;
 	float: left;
 	text-align: center;
-	height: 120px;
 }
 
 .photocontainer img {
@@ -89,31 +88,4 @@ body {
 }
 .navigation a {
 	color: #fff;
-}
-
-/* MEDIA QUERIES*/
-@media only screen and (max-width : 940px),
-only screen and (max-device-width : 940px){
-	.photocontainer {width: 21%;}
-}
-
-@media only screen and (max-width : 720px),
-only screen and (max-device-width : 720px){
-	.photocontainer {width: 29.33333%;}
-	.header h1 {font-size: 40px;}
-}
-
-@media only screen and (max-width : 530px),
-only screen and (max-device-width : 530px){
-	.photocontainer {width: 46%;}
-	.header h1 {font-size: 28px;}
-}
-
-@media only screen and (max-width : 320px),
-only screen and (max-device-width : 320px){
-	.photocontainer {width: 96%;}
-	.photocontainer img {width: 96%;}
-	.photocontainer h3 {font-size: 18px;}
-	.photocontainer p, .header p {font-size: 18px;}
-	.header h1 {font-size: 70px;}
 }

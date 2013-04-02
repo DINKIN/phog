@@ -29,11 +29,11 @@
 {% for media in media %}
 <div class="photocontainer">
 	{% if media.type==0 %}
-	<a href="view_photo_{{media.id}}.html"><img src="{{media.thumb_filename}}" alt="{{media.title}}" /></a>
+	<a href="view_photo_{{media.id}}.html"><img src="{{media.large_filename}}" alt="{{media.title}}" /></a>
 	<h3>{{media.title}}</h3>
 	{% else %}
 	<a href="view_video_{{media.id}}.html"><img src="{{media.thumb_filename}}" alt="{{media.title}}" /></a>
-	<h3>{{media.title}}</h3>
+	<h3>{{media.title}} (click to play)</h3>
 	{% endif %}
 </div>
 {% endfor %}
