@@ -1,16 +1,12 @@
 
- * plugin calls
- 	* notification plugin api - email notifications, fb post plugin
- 	* upload plugin api - boto upload plugin
+ * implement some kind of bootstrapper/gui for use from lightroom
 
+   * need a way to pick up s3 settings from somewhere 
 
- * password protection
+ * maybe just have a reconfigure/reset command that prompts for new name and path?
 
  * tidy up css
-
- * theme settings file
 
  * split comments out into seperate template fragment to allow switching system out
 
 
- * other themes

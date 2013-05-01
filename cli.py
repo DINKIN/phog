@@ -5,7 +5,6 @@ import shutil
 import ConfigParser
 import gallery
 
-
 def create(args):
     project_name=vars(args)['name']
     print "creating skeleton project named '%s'"%project_name
