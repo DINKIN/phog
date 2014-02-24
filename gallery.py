@@ -13,7 +13,7 @@ RESERVED_TEMPLATES = ['base.html', 'index.html', 'albumpage.html',
                       'viewimage.html', 'viewvideo.html', 'embedvideo.html']
 
 
-def processImage(config):
+def process_image(config):
     image = config[0]
 
     imgpath, imgname = image.source_path, image.filename
@@ -101,57 +101,57 @@ class Gallery:
         self.video_size = self.config.get("gallery",
                                           "video_max_size").split(",")
 
-        self.configureTemplates()
-        self.discoverPlugins()
+        self.configure_templates()
+        self.discover_plugins()
 
-    def discoverPlugins(self):
-        self.pluginManager = PluginManager()
-        self.pluginManager.discoverPlugins(
+    def discover_plugins(self):
+        self.plugin_manager = PluginManager()
+        self.plugin_manager.discover_plugins(
             os.path.join(self.root_path, "plugins"))
 
-    def configureTemplates(self):
+    def configure_templates(self):
         self.tempEnv = Environment(
             loader=FileSystemLoader(self.templates_path))
 
-    def getTemplate(self, templateName):
+    def get_template(self, templateName):
         return self.tempEnv.get_template(templateName)
 
     def generate(self):
-        images = self.discoverImages()
+        images = self.discover_images()
 
-        videos = self.discoverAndProcessVideos()
+        videos = self.process_videos()
 
         print videos
 
-        images = self.generateImages(images)
+        images = self.generate_images(images)
 
         # plugin call point - pre page generation, with images as
         # arguments (to provide extra context for pages)
-        extra_context = self.pluginManager.prePageGeneration(
+        extra_context = self.plugin_manager.prePageGeneration(
             self.config,
             self.source_image_path,
             self.source_video_path,
             images,
             videos)
 
-        self.generatePages(images, videos, extra_context)
-        self.copyStaticContent()
+        self.generate_pages(images, videos, extra_context)
+        self.copy_static_content()
 
     def upload(self):
         # plugin call point, generation complete - upload
-        self.pluginManager.upload(self.config, self.output_path)
+        self.plugin_manager.upload(self.config, self.output_path)
 
         # plugin call point, generation complete - notify
-        self.pluginManager.notify(self.config, self.output_path)
+        self.plugin_manager.notify(self.config, self.output_path)
 
-    def copyStaticContent(self):
+    def copy_static_content(self):
         static_path = os.path.join(self.theme_path, "static")
         static_output_path = os.path.join(self.output_path, "static")
         if os.path.exists(static_output_path):
             shutil.rmtree(static_output_path)
         shutil.copytree(static_path, static_output_path)
 
-    def discoverImages(self):
+    def discover_images(self):
         images = []
         for filename in os.listdir(self.source_image_path):
             if filename.lower().find(".jpg") != -1:
@@ -168,7 +168,7 @@ class Gallery:
         print "%s images found" % len(images)
         return images
 
-    def discoverAndProcessVideos(self):
+    def process_videos(self):
         videos = []
         vp = videoprocessing.VideoProcessor()
 
@@ -214,7 +214,7 @@ class Gallery:
 
         return videos
 
-    def generatePages(self, images, videos, extra_context):
+    def generate_pages(self, images, videos, extra_context):
         try:
             themeMode = self.config.get("theme", "THEME_MODE")
         except ConfigParser.NoOptionError:
@@ -231,13 +231,13 @@ class Gallery:
                 mediaobject.page = "view_video_%s.html" % mediaobject.id
 
         if themeMode == 'ajax':
-            return self.generateAjaxPages(media, extra_context)
+            return self.generate_ajax_pages(media, extra_context)
         elif themeMode == 'static':
-            return self.generatePlainPages(media, extra_context)
+            return self.generate_plain_pages(media, extra_context)
         else:
             raise Exception("unknown mode in theme")
 
-    def generateAjaxPages(self, media, extra_context):
+    def generate_ajax_pages(self, media, extra_context):
 
         page_context = {
             'root_url': self.config.get("gallery", "ROOT_URL"),
@@ -248,7 +248,7 @@ class Gallery:
 
         page_context.update(extra_context)
 
-        self.renderPage("index.html", "index.html", page_context)
+        self.render_page("index.html", "index.html", page_context)
 
         # create video embed pages
         for mediaitem in media:
@@ -257,12 +257,12 @@ class Gallery:
                     'video': mediaitem,
                     'root_url': self.config.get("gallery", "ROOT_URL"),
                 }
-                self.renderPage("embedvideo.html", "embed_%s.html" %
+                self.render_page("embedvideo.html", "embed_%s.html" %
                                 mediaitem.filename, local_page_context)
 
-        self.renderStaticPages(page_context)
+        self.render_static_pages(page_context)
 
-    def generatePlainPages(self, media, extra_context):
+    def generate_plain_pages(self, media, extra_context):
         indexIsAlbumPage = self.config.getboolean(
             "theme", "INDEX_IS_ALBUM_PAGE")
         imagesPerPage = int(self.config.get("theme", "IMAGES_PER_PAGE"))
@@ -327,7 +327,7 @@ class Gallery:
             page_context['prevlink'] = prevlink
             page_context['nextlink'] = nextlink
 
-            self.renderPage("albumpage.html", currPageName, page_context)
+            self.render_page("albumpage.html", currPageName, page_context)
 
             currPageName = "page%s.html" % (pageno + 1)
 
@@ -338,7 +338,7 @@ class Gallery:
                     'img': mediaitem,
                     'root_url': self.config.get("gallery", "ROOT_URL"),
                 }
-                self.renderPage(
+                self.render_page(
                     "viewimage.html", mediaitem.page, local_page_context)
 
             if mediaitem.type == MediaObject.TYPE_VIDEO:
@@ -346,36 +346,36 @@ class Gallery:
                     'video': mediaitem,
                     'root_url': self.config.get("gallery", "ROOT_URL"),
                 }
-                self.renderPage(
+                self.render_page(
                     "viewvideo.html", mediaitem.page, local_page_context)
 
-        self.renderStaticPages(page_context)
+        self.render_static_pages(page_context)
 
-    def renderStaticPages(self, context):
+    def render_static_pages(self, context):
         indexIsAlbumPage = self.config.getboolean(
             "theme", "INDEX_IS_ALBUM_PAGE")
 
         if not indexIsAlbumPage:
-            self.renderPage("index.html", "index.html", context)
+            self.render_page("index.html", "index.html", context)
 
         # render any other template not in the list of reserved names
         for template in self.tempEnv.list_templates():
             if template not in RESERVED_TEMPLATES:
                 print "rendering static page - %s" % template
-                self.renderPage(template, template, context)
+                self.render_page(template, template, context)
 
-    def renderPage(self, templateName, outputName, context):
-        page_template = self.getTemplate(templateName)
+    def render_page(self, templateName, outputName, context):
+        page_template = self.get_template(templateName)
 
         html = page_template.render(context)
         outfile = open(os.path.join(self.output_path, outputName), "w")
         outfile.write(html)
         outfile.close()
 
-    def generateImages(self, images):
+    def generate_images(self, images):
         p = Pool()
 
-        images = p.map(processImage, [[image] for image in images])
+        images = p.map(process_image, [[image] for image in images])
 
         print images
 
